@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WS Two Factor Extension
  * Description: WP-CLI commands and enforcement features extending the Two Factor plugin.
- * Version:     1.0.0
+ * Version:     1.1.0
  * Author:      株式会社Webの相談所
  * Author URI:  https://web-soudan.co.jp/
  * License:     GPL-2.0-or-later
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( 'WS_2FA_EXT_DIR', plugin_dir_path( __FILE__ ) );
-define( 'WS_2FA_EXT_VERSION', '1.0.0' );
+define( 'WS_2FA_EXT_VERSION', '1.1.0' );
 
 /**
  * Two Factor プラグインが有効かどうかチェック。
