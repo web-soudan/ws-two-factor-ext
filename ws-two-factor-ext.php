@@ -56,6 +56,10 @@ add_action(
 		require_once WS_2FA_EXT_DIR . 'includes/class-ws-two-factor-enforcement.php';
 		WS_Two_Factor_Enforcement::get_instance();
 
+		// Lock クラス（常時ロード）
+		require_once WS_2FA_EXT_DIR . 'includes/class-ws-two-factor-lock.php';
+		WS_Two_Factor_Lock::get_instance();
+
 		// WP-CLI コマンド
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once WS_2FA_EXT_DIR . 'includes/class-ws-two-factor-cli.php';
