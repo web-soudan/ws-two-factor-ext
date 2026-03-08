@@ -1,3 +1,267 @@
+# WS Two Factor Extension — Specification
+
+An extension plugin for the Two Factor plugin (`wordpress/two-factor`) to manage and enforce 2FA settings via WP-CLI.
+
+| Version | Changes |
+|---|---|
+| 1.1.0 | Added non-admin 2FA lock feature |
+| 1.0.0 | Initial release |
+
+---
+
+## File Structure
+
+```
+ws-two-factor-ext/
+├── ws-two-factor-ext.php                      # Main plugin file
+├── SPEC.md
+├── README.md
+└── includes/
+    ├── class-ws-two-factor-cli.php            # WP-CLI commands
+    ├── class-ws-two-factor-enforcement.php   # Enforcement logic
+    └── class-ws-two-factor-lock.php          # Non-admin 2FA lock
+```
+
+---
+
+## Dependencies
+
+- WordPress 6.8+
+- Two Factor plugin (`two-factor`) must be activated
+
+---
+
+## WP-CLI Command Reference
+
+Command prefix: `wp 2fa-ex`
+
+### `wp 2fa-ex list`
+
+Lists the 2FA configuration status of all users.
+
+| Option | Description |
+|---|---|
+| `--role=<role>` | Filter to users with the specified role |
+| `--enabled-only` | Show only users with 2FA enabled |
+| `--fields=<fields>` | Comma-separated list of fields to display |
+| `--format=<format>` | Output format: table / csv / json / yaml |
+
+**Examples:**
+```bash
+wp 2fa-ex list
+wp 2fa-ex list --role=subscriber --format=csv
+wp 2fa-ex list --enabled-only
+```
+
+---
+
+### `wp 2fa-ex status <user>`
+
+Displays detailed 2FA status for a specific user.
+
+**Examples:**
+```bash
+wp 2fa-ex status admin
+wp 2fa-ex status 1
+wp 2fa-ex status user@example.com
+```
+
+---
+
+### `wp 2fa-ex enable <user> --provider=<provider>`
+
+Enables a 2FA provider for a user.
+
+| Option | Description |
+|---|---|
+| `--provider=<provider>` | `email` / `totp` / `backup` / `fido-u2f` |
+| `--set-primary` | Also set the enabled provider as Primary |
+
+**Examples:**
+```bash
+wp 2fa-ex enable admin --provider=email
+wp 2fa-ex enable admin --provider=totp --set-primary
+```
+
+---
+
+### `wp 2fa-ex disable <user> [--provider=<provider>]`
+
+Disables a 2FA provider for a user. Omitting `--provider` disables all providers.
+
+**Examples:**
+```bash
+wp 2fa-ex disable admin --provider=email
+wp 2fa-ex disable admin          # disable all providers
+```
+
+---
+
+### `wp 2fa-ex set-primary <user> --provider=<provider>`
+
+Sets the primary 2FA provider. The target provider must already be enabled.
+
+**Examples:**
+```bash
+wp 2fa-ex set-primary admin --provider=totp
+```
+
+---
+
+### `wp 2fa-ex set-enforce`
+
+Saves an enforcement rule that is automatically applied when a new user is created.
+The rule is stored in `wp_options` under `ws_2fa_enforcement_rule`.
+
+| Option | Description |
+|---|---|
+| `--provider=<providers>` | Comma-separated providers (e.g. `email,backup`) |
+| `--primary=<provider>` | Primary provider |
+| `--role=<roles>` | Target roles (comma-separated; omit for all roles) |
+| `--all` | After saving rule, immediately apply to all existing users |
+| `--overwrite` | With `--all`: also overwrite users who already have 2FA configured |
+| `--dry-run` | With `--all`: preview changes without applying |
+| `--disable` | Delete the enforcement rule |
+
+**Examples:**
+```bash
+wp 2fa-ex set-enforce --provider=email --role=subscriber
+wp 2fa-ex set-enforce --provider=email,backup --primary=email
+wp 2fa-ex set-enforce --provider=email --all
+wp 2fa-ex set-enforce --provider=email --all --dry-run
+wp 2fa-ex set-enforce --disable
+```
+
+---
+
+### `wp 2fa-ex apply-enforce`
+
+Applies the saved enforcement rule to existing users.
+
+| Option | Description |
+|---|---|
+| `--user=<user>` | Apply to a specific user only |
+| `--role=<role>` | Apply only to users with the specified role |
+| `--overwrite` | Also overwrite users who already have 2FA configured |
+| `--dry-run` | Preview changes without applying |
+
+**Examples:**
+```bash
+wp 2fa-ex apply-enforce
+wp 2fa-ex apply-enforce --role=subscriber
+wp 2fa-ex apply-enforce --dry-run
+wp 2fa-ex apply-enforce --overwrite
+```
+
+---
+
+### `wp 2fa-ex show-enforce`
+
+Displays the currently saved enforcement rule.
+
+**Examples:**
+```bash
+wp 2fa-ex show-enforce
+```
+
+---
+
+### `wp 2fa-ex lock-enable`
+
+Prevents non-admin users from disabling their own 2FA.
+The lock state is saved in `wp_options` under `ws_2fa_lock_enabled`.
+
+**Blocked actions:**
+- Removing providers via the profile page (form submission)
+- Removing providers via REST API (`DELETE /wp-json/two-factor/1.0/totp`, etc.)
+
+**Not restricted (admins are exempt):**
+- Users with the `manage_options` capability
+
+**Profile page changes:**
+- A warning notice is shown on the profile page of non-admin users who have 2FA configured
+
+**Examples:**
+```bash
+wp 2fa-ex lock-enable
+```
+
+---
+
+### `wp 2fa-ex lock-disable`
+
+Disables the 2FA lock.
+
+**Examples:**
+```bash
+wp 2fa-ex lock-disable
+```
+
+---
+
+### `wp 2fa-ex lock-status`
+
+Displays the current 2FA lock state.
+
+**Examples:**
+```bash
+wp 2fa-ex lock-status
+```
+
+---
+
+## Provider Names
+
+| Alias | Class Name | Description |
+|---|---|---|
+| `email` | `Two_Factor_Email` | One-time password via email |
+| `totp` | `Two_Factor_Totp` | Authenticator app (TOTP) |
+| `backup` | `Two_Factor_Backup_Codes` | Backup codes |
+| `fido-u2f` | `Two_Factor_FIDO_U2F` | FIDO U2F / YubiKey |
+
+---
+
+## Enforcement Logic
+
+1. Save a rule via `wp 2fa-ex set-enforce` — stored in `wp_options`
+2. `user_register` hook auto-applies the rule on new user creation
+3. `wp 2fa-ex apply-enforce` can bulk-apply to existing users
+4. Users who already have 2FA configured are skipped by default (`--overwrite` to override)
+5. Enforcement providers are **merged** into existing configuration (existing providers are not removed)
+
+---
+
+## Lock Logic
+
+1. `wp 2fa-ex lock-enable` saves lock state to `wp_options`
+2. `personal_options_update` hook at priority **5** runs before Two Factor's save handler (priority 10), forcibly merging existing providers into `$_POST` to prevent removal
+3. `two_factor_rest_api_can_edit_user` filter rejects REST API DELETE requests with HTTP 403
+4. Lock is disabled by default; must be explicitly enabled via `lock-enable`
+5. Users without 2FA configured are not affected (initial setup remains unrestricted)
+6. Non-admin users cannot **remove** existing providers, but can still **add** new ones
+
+---
+
+## Data Storage
+
+User meta keys used by the Two Factor plugin:
+
+| Meta Key | Content |
+|---|---|
+| `_two_factor_enabled_providers` | Array of enabled provider class names |
+| `_two_factor_provider` | Primary provider class name |
+
+Options used by this plugin:
+
+| Option Key | Content |
+|---|---|
+| `ws_2fa_enforcement_rule` | Enforcement rule (providers, primary, roles) |
+| `ws_2fa_lock_enabled` | 2FA lock state (bool) |
+
+---
+
+---
+
 # WS Two Factor Extension — 仕様書
 
 Two Factor プラグイン (`wordpress/two-factor`) の機能を WP-CLI から操作・強制適用するための拡張プラグイン。
