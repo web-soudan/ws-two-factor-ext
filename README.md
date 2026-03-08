@@ -224,6 +224,7 @@ wp 2fa-ex lock-status
 
 | Version | Changes |
 |---|---|
+| 1.2.0 | Added i18n support — all user-facing strings are now translatable |
 | 1.1.0 | Added non-admin 2FA lock feature (`lock-enable` / `lock-disable` / `lock-status`) |
 | 1.0.0 | Initial release |
 
@@ -506,6 +507,7 @@ wp 2fa-ex lock-status
 
 | バージョン | 変更内容 |
 |---|---|
+| 1.2.0 | 多言語対応 (i18n) — ユーザー向け全文字列を翻訳可能に |
 | 1.1.0 | 非管理者による 2FA 無効化ロック機能を追加 (`lock-enable` / `lock-disable` / `lock-status`) |
 | 1.0.0 | 初回リリース |
 

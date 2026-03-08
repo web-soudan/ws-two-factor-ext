@@ -158,7 +158,7 @@ class WS_Two_Factor_Lock {
 
 		return new WP_Error(
 			'two_factor_locked',
-			__( '2FA の無効化は管理者のみが行えます。', 'ws-two-factor-ext' ),
+			__( 'Only administrators can disable 2FA.', 'ws-two-factor-ext' ),
 			array( 'status' => 403 )
 		);
 	}
@@ -187,8 +187,8 @@ class WS_Two_Factor_Lock {
 		?>
 		<div class="notice notice-warning inline" style="margin: 1em 0 0;">
 			<p>
-				<strong><?php esc_html_e( '2ファクター認証はロックされています。', 'ws-two-factor-ext' ); ?></strong>
-				<?php esc_html_e( '現在の 2FA 設定を無効化・削除するには管理者へお問い合わせください。', 'ws-two-factor-ext' ); ?>
+				<strong><?php esc_html_e( 'Two-factor authentication is locked.', 'ws-two-factor-ext' ); ?></strong>
+				<?php esc_html_e( 'Please contact an administrator to disable or remove your current 2FA settings.', 'ws-two-factor-ext' ); ?>
 			</p>
 		</div>
 		<?php

@@ -14,26 +14,26 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * ## EXAMPLES
  *
- *     # 全ユーザーの 2FA 設定を一覧表示
+ *     # List 2FA status of all users
  *     wp 2fa-ex list
  *
- *     # 特定ユーザーの詳細を表示
+ *     # Show detailed status of a user
  *     wp 2fa-ex status admin
  *
- *     # Email プロバイダーを有効化
+ *     # Enable Email provider
  *     wp 2fa-ex enable admin --provider=email
  *
- *     # 2FA を無効化
+ *     # Disable 2FA
  *     wp 2fa-ex disable admin
  *
- *     # 強制ルールを設定してから既存ユーザーに適用
+ *     # Save enforcement rule and apply to existing users
  *     wp 2fa-ex set-enforce --provider=email --role=subscriber
  *     wp 2fa-ex apply-enforce --role=subscriber
  */
 class WS_Two_Factor_CLI {
 
 	/**
-	 * プロバイダーの短縮名 → クラス名マッピング。
+	 * Provider alias → class name mapping.
 	 */
 	private const PROVIDER_ALIASES = array(
 		'email'    => 'Two_Factor_Email',
@@ -47,22 +47,22 @@ class WS_Two_Factor_CLI {
 	// -----------------------------------------------------------------------
 
 	/**
-	 * 全ユーザーの 2FA 設定状況を一覧表示します。
+	 * List 2FA configuration status for all users.
 	 *
 	 * ## OPTIONS
 	 *
 	 * [--role=<role>]
-	 * : 指定したロールのユーザーのみ表示します。
+	 * : Filter by role.
 	 *
 	 * [--enabled-only]
-	 * : 2FA が有効なユーザーのみ表示します。
+	 * : Show only users with 2FA enabled.
 	 *
 	 * [--fields=<fields>]
-	 * : 表示するフィールドをカンマ区切りで指定します。
-	 * デフォルト: ID,user_login,email,enabled_providers,primary_provider
+	 * : Comma-separated list of fields to display.
+	 * Default: ID,user_login,email,enabled_providers,primary_provider
 	 *
 	 * [--format=<format>]
-	 * : 出力形式 (table, csv, json, yaml)。デフォルト: table
+	 * : Output format (table, csv, json, yaml). Default: table
 	 *
 	 * ## EXAMPLES
 	 *
@@ -85,14 +85,14 @@ class WS_Two_Factor_CLI {
 
 		$users = get_users( $query_args );
 
-		$rows            = array();
-		$enabled_only    = isset( $assoc_args['enabled-only'] );
-		$default_fields  = 'ID,user_login,email,enabled_providers,primary_provider';
-		$fields          = explode( ',', $assoc_args['fields'] ?? $default_fields );
+		$rows           = array();
+		$enabled_only   = isset( $assoc_args['enabled-only'] );
+		$default_fields = 'ID,user_login,email,enabled_providers,primary_provider';
+		$fields         = explode( ',', $assoc_args['fields'] ?? $default_fields );
 
 		foreach ( $users as $user ) {
-			$enabled   = $this->get_enabled_providers( $user );
-			$primary   = $this->get_primary_provider( $user );
+			$enabled = $this->get_enabled_providers( $user );
+			$primary = $this->get_primary_provider( $user );
 
 			if ( $enabled_only && empty( $enabled ) ) {
 				continue;
@@ -103,13 +103,14 @@ class WS_Two_Factor_CLI {
 				'user_login'        => $user->user_login,
 				'email'             => $user->user_email,
 				'enabled_providers' => implode( ', ', array_map( array( $this, 'class_to_alias' ), $enabled ) ),
-				'primary_provider'  => $primary ? $this->class_to_alias( $primary ) : '(none)',
+				/* translators: shown when no primary provider is set */
+				'primary_provider'  => $primary ? $this->class_to_alias( $primary ) : __( '(none)', 'ws-two-factor-ext' ),
 				'roles'             => implode( ', ', $user->roles ),
 			);
 		}
 
 		if ( empty( $rows ) ) {
-			WP_CLI::line( '該当するユーザーが見つかりませんでした。' );
+			WP_CLI::line( __( 'No matching users found.', 'ws-two-factor-ext' ) );
 			return;
 		}
 
@@ -122,12 +123,12 @@ class WS_Two_Factor_CLI {
 	// -----------------------------------------------------------------------
 
 	/**
-	 * 特定ユーザーの 2FA 詳細ステータスを表示します。
+	 * Show detailed 2FA status for a specific user.
 	 *
 	 * ## OPTIONS
 	 *
 	 * <user>
-	 * : ユーザー ID、ログイン名、またはメールアドレス。
+	 * : User ID, login name, or email address.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -145,22 +146,26 @@ class WS_Two_Factor_CLI {
 		$all_providers = Two_Factor_Core::get_providers();
 
 		WP_CLI::line( '' );
-		WP_CLI::line( sprintf( '  ユーザー  : %s (ID: %d)', $user->user_login, $user->ID ) );
-		WP_CLI::line( sprintf( '  メール    : %s', $user->user_email ) );
-		WP_CLI::line( sprintf( '  ロール    : %s', implode( ', ', $user->roles ) ) );
+		/* translators: 1: user login, 2: user ID */
+		WP_CLI::line( sprintf( __( '  User     : %1$s (ID: %2$d)', 'ws-two-factor-ext' ), $user->user_login, $user->ID ) );
+		/* translators: %s: email address */
+		WP_CLI::line( sprintf( __( '  Email    : %s', 'ws-two-factor-ext' ), $user->user_email ) );
+		/* translators: %s: comma-separated list of roles */
+		WP_CLI::line( sprintf( __( '  Roles    : %s', 'ws-two-factor-ext' ), implode( ', ', $user->roles ) ) );
 		WP_CLI::line( '' );
-		WP_CLI::line( '  ■ 2FA プロバイダー設定状況' );
+		WP_CLI::line( __( '  2FA Provider Status', 'ws-two-factor-ext' ) );
 		WP_CLI::line( '' );
 
 		foreach ( $all_providers as $class => $provider ) {
-			$alias       = $this->class_to_alias( $class );
-			$is_enabled  = in_array( $class, $enabled, true );
-			$is_primary  = $class === $primary;
-			$is_avail    = $provider->is_available_for_user( $user );
+			$alias      = $this->class_to_alias( $class );
+			$is_enabled = in_array( $class, $enabled, true );
+			$is_primary = $class === $primary;
+			$is_avail   = $provider->is_available_for_user( $user );
 
 			$status_icon  = $is_enabled ? WP_CLI::colorize( '%G✔%n' ) : WP_CLI::colorize( '%r✘%n' );
-			$primary_mark = $is_primary ? WP_CLI::colorize( ' %Y[primary]%n' ) : '';
-			$avail_mark   = ! $is_avail && $is_enabled ? WP_CLI::colorize( ' %r[未設定]%n' ) : '';
+			$primary_mark = $is_primary ? WP_CLI::colorize( ' %Y[' . __( 'primary', 'ws-two-factor-ext' ) . ']%n' ) : '';
+			/* translators: label shown when provider is enabled but not yet configured */
+			$avail_mark = ! $is_avail && $is_enabled ? WP_CLI::colorize( ' %r[' . __( 'not configured', 'ws-two-factor-ext' ) . ']%n' ) : '';
 
 			WP_CLI::line(
 				sprintf(
@@ -176,17 +181,19 @@ class WS_Two_Factor_CLI {
 
 		WP_CLI::line( '' );
 
-		// 強制ルールの確認
+		// Show enforcement rule if applicable.
 		$enforcement = WS_Two_Factor_Enforcement::get_instance();
 		$rule        = $enforcement->get_rule();
 
 		if ( ! empty( $rule ) && ! empty( $rule['providers'] ) ) {
 			$applies = empty( $rule['roles'] ) || array_intersect( $user->roles, $rule['roles'] );
 			if ( $applies ) {
-				WP_CLI::line( '  ■ 強制ルール (このユーザーに適用対象)' );
-				WP_CLI::line( sprintf( '    プロバイダー: %s', implode( ', ', array_map( array( $this, 'class_to_alias' ), $rule['providers'] ) ) ) );
+				WP_CLI::line( __( '  Enforcement rule (applies to this user)', 'ws-two-factor-ext' ) );
+				/* translators: %s: comma-separated list of provider aliases */
+				WP_CLI::line( sprintf( __( '    Providers: %s', 'ws-two-factor-ext' ), implode( ', ', array_map( array( $this, 'class_to_alias' ), $rule['providers'] ) ) ) );
 				if ( ! empty( $rule['primary'] ) ) {
-					WP_CLI::line( sprintf( '    Primary:      %s', $this->class_to_alias( $rule['primary'] ) ) );
+					/* translators: %s: provider alias */
+					WP_CLI::line( sprintf( __( '    Primary:   %s', 'ws-two-factor-ext' ), $this->class_to_alias( $rule['primary'] ) ) );
 				}
 				WP_CLI::line( '' );
 			}
@@ -198,18 +205,18 @@ class WS_Two_Factor_CLI {
 	// -----------------------------------------------------------------------
 
 	/**
-	 * ユーザーの 2FA プロバイダーを有効化します。
+	 * Enable a 2FA provider for a user.
 	 *
 	 * ## OPTIONS
 	 *
 	 * <user>
-	 * : ユーザー ID、ログイン名、またはメールアドレス。
+	 * : User ID, login name, or email address.
 	 *
 	 * --provider=<provider>
-	 * : 有効化するプロバイダー (email, totp, backup, fido-u2f)。
+	 * : Provider to enable (email, totp, backup, fido-u2f).
 	 *
 	 * [--set-primary]
-	 * : 有効化したプロバイダーを Primary にも設定します。
+	 * : Also set the enabled provider as the primary provider.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -225,16 +232,19 @@ class WS_Two_Factor_CLI {
 		$enabled = $this->get_enabled_providers( $user );
 
 		if ( in_array( $class, $enabled, true ) ) {
-			WP_CLI::warning( sprintf( '%s はすでに有効です。', $this->class_to_alias( $class ) ) );
+			/* translators: %s: provider alias */
+			WP_CLI::warning( sprintf( __( '%s is already enabled.', 'ws-two-factor-ext' ), $this->class_to_alias( $class ) ) );
 		} else {
 			$enabled[] = $class;
 			update_user_meta( $user->ID, Two_Factor_Core::ENABLED_PROVIDERS_USER_META_KEY, $enabled );
-			WP_CLI::success( sprintf( '%s (ID: %d) の %s を有効化しました。', $user->user_login, $user->ID, $this->class_to_alias( $class ) ) );
+			/* translators: 1: user login, 2: user ID, 3: provider alias */
+			WP_CLI::success( sprintf( __( 'Enabled %3$s for %1$s (ID: %2$d).', 'ws-two-factor-ext' ), $user->user_login, $user->ID, $this->class_to_alias( $class ) ) );
 		}
 
 		if ( isset( $assoc_args['set-primary'] ) ) {
 			update_user_meta( $user->ID, Two_Factor_Core::PROVIDER_USER_META_KEY, $class );
-			WP_CLI::success( sprintf( '%s を Primary プロバイダーに設定しました。', $this->class_to_alias( $class ) ) );
+			/* translators: %s: provider alias */
+			WP_CLI::success( sprintf( __( 'Set %s as the primary provider.', 'ws-two-factor-ext' ), $this->class_to_alias( $class ) ) );
 		}
 	}
 
@@ -243,16 +253,16 @@ class WS_Two_Factor_CLI {
 	// -----------------------------------------------------------------------
 
 	/**
-	 * ユーザーの 2FA プロバイダーを無効化します。
+	 * Disable a 2FA provider for a user.
 	 *
 	 * ## OPTIONS
 	 *
 	 * <user>
-	 * : ユーザー ID、ログイン名、またはメールアドレス。
+	 * : User ID, login name, or email address.
 	 *
 	 * [--provider=<provider>]
-	 * : 無効化するプロバイダー (email, totp, backup, fido-u2f)。
-	 * 省略した場合は 2FA を全て無効化します。
+	 * : Provider to disable (email, totp, backup, fido-u2f).
+	 * Omit to disable all 2FA providers.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -265,10 +275,11 @@ class WS_Two_Factor_CLI {
 		$user = $this->get_user_or_error( $args[0] );
 
 		if ( empty( $assoc_args['provider'] ) ) {
-			// 全プロバイダー無効化
+			// Disable all providers.
 			delete_user_meta( $user->ID, Two_Factor_Core::ENABLED_PROVIDERS_USER_META_KEY );
 			delete_user_meta( $user->ID, Two_Factor_Core::PROVIDER_USER_META_KEY );
-			WP_CLI::success( sprintf( '%s (ID: %d) の 2FA を全て無効化しました。', $user->user_login, $user->ID ) );
+			/* translators: 1: user login, 2: user ID */
+			WP_CLI::success( sprintf( __( 'Disabled all 2FA providers for %1$s (ID: %2$d).', 'ws-two-factor-ext' ), $user->user_login, $user->ID ) );
 			return;
 		}
 
@@ -276,21 +287,23 @@ class WS_Two_Factor_CLI {
 		$enabled = $this->get_enabled_providers( $user );
 
 		if ( ! in_array( $class, $enabled, true ) ) {
-			WP_CLI::warning( sprintf( '%s は有効化されていません。', $this->class_to_alias( $class ) ) );
+			/* translators: %s: provider alias */
+			WP_CLI::warning( sprintf( __( '%s is not enabled.', 'ws-two-factor-ext' ), $this->class_to_alias( $class ) ) );
 			return;
 		}
 
 		$enabled = array_values( array_diff( $enabled, array( $class ) ) );
 		update_user_meta( $user->ID, Two_Factor_Core::ENABLED_PROVIDERS_USER_META_KEY, $enabled );
 
-		// Primary が削除対象なら Primary もクリア
+		// Clear primary if it was the disabled provider.
 		$primary = $this->get_primary_provider( $user );
 		if ( $primary === $class ) {
 			delete_user_meta( $user->ID, Two_Factor_Core::PROVIDER_USER_META_KEY );
-			WP_CLI::line( '  Primary プロバイダーもクリアしました。' );
+			WP_CLI::line( '  ' . __( 'Primary provider also cleared.', 'ws-two-factor-ext' ) );
 		}
 
-		WP_CLI::success( sprintf( '%s (ID: %d) の %s を無効化しました。', $user->user_login, $user->ID, $this->class_to_alias( $class ) ) );
+		/* translators: 1: user login, 2: user ID, 3: provider alias */
+		WP_CLI::success( sprintf( __( 'Disabled %3$s for %1$s (ID: %2$d).', 'ws-two-factor-ext' ), $user->user_login, $user->ID, $this->class_to_alias( $class ) ) );
 	}
 
 	// -----------------------------------------------------------------------
@@ -298,15 +311,15 @@ class WS_Two_Factor_CLI {
 	// -----------------------------------------------------------------------
 
 	/**
-	 * ユーザーの Primary 2FA プロバイダーを設定します。
+	 * Set the primary 2FA provider for a user.
 	 *
 	 * ## OPTIONS
 	 *
 	 * <user>
-	 * : ユーザー ID、ログイン名、またはメールアドレス。
+	 * : User ID, login name, or email address.
 	 *
 	 * --provider=<provider>
-	 * : Primary に設定するプロバイダー (email, totp, backup, fido-u2f)。
+	 * : Provider to set as primary (email, totp, backup, fido-u2f).
 	 *
 	 * ## EXAMPLES
 	 *
@@ -320,11 +333,13 @@ class WS_Two_Factor_CLI {
 
 		$enabled = $this->get_enabled_providers( $user );
 		if ( ! in_array( $class, $enabled, true ) ) {
-			WP_CLI::error( sprintf( '%s は有効化されていません。先に enable コマンドで有効化してください。', $this->class_to_alias( $class ) ) );
+			/* translators: %s: provider alias */
+			WP_CLI::error( sprintf( __( '%s is not enabled. Enable it first with the enable command.', 'ws-two-factor-ext' ), $this->class_to_alias( $class ) ) );
 		}
 
 		update_user_meta( $user->ID, Two_Factor_Core::PROVIDER_USER_META_KEY, $class );
-		WP_CLI::success( sprintf( '%s (ID: %d) の Primary プロバイダーを %s に設定しました。', $user->user_login, $user->ID, $this->class_to_alias( $class ) ) );
+		/* translators: 1: user login, 2: user ID, 3: provider alias */
+		WP_CLI::success( sprintf( __( 'Set primary provider of %1$s (ID: %2$d) to %3$s.', 'ws-two-factor-ext' ), $user->user_login, $user->ID, $this->class_to_alias( $class ) ) );
 	}
 
 	// -----------------------------------------------------------------------
@@ -332,30 +347,30 @@ class WS_Two_Factor_CLI {
 	// -----------------------------------------------------------------------
 
 	/**
-	 * 新規ユーザー作成時に自動適用する 2FA 強制ルールを設定します。
+	 * Save a 2FA enforcement rule applied automatically on new user creation.
 	 *
 	 * ## OPTIONS
 	 *
 	 * [--provider=<providers>]
-	 * : 強制するプロバイダーをカンマ区切りで指定 (例: email,backup)。
+	 * : Comma-separated providers to enforce (e.g. email,backup).
 	 *
 	 * [--primary=<provider>]
-	 * : Primary プロバイダーを指定 (例: email)。
+	 * : Primary provider (e.g. email).
 	 *
 	 * [--role=<roles>]
-	 * : 適用対象のロールをカンマ区切りで指定。省略時は全ロールに適用。
+	 * : Target roles (comma-separated). Omit to apply to all roles.
 	 *
 	 * [--all]
-	 * : ルールを保存した後、既存の全ユーザーにも即時適用します。
+	 * : After saving the rule, immediately apply it to all existing users.
 	 *
 	 * [--overwrite]
-	 * : --all と組み合わせて使用。すでに 2FA が設定済みのユーザーにも上書き適用します。
+	 * : Used with --all: also overwrite users who already have 2FA configured.
 	 *
 	 * [--dry-run]
-	 * : --all と組み合わせて使用。実際には変更せず、適用予定の内容を表示します。
+	 * : Used with --all: preview changes without applying.
 	 *
 	 * [--disable]
-	 * : 強制ルールを無効化します。
+	 * : Delete the enforcement rule.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -372,12 +387,12 @@ class WS_Two_Factor_CLI {
 
 		if ( isset( $assoc_args['disable'] ) ) {
 			$enforcement->delete_rule();
-			WP_CLI::success( '強制ルールを削除しました。' );
+			WP_CLI::success( __( 'Enforcement rule deleted.', 'ws-two-factor-ext' ) );
 			return;
 		}
 
 		if ( empty( $assoc_args['provider'] ) ) {
-			WP_CLI::error( '--provider オプションを指定してください。' );
+			WP_CLI::error( __( 'Please specify the --provider option.', 'ws-two-factor-ext' ) );
 		}
 
 		$provider_aliases = explode( ',', $assoc_args['provider'] );
@@ -390,7 +405,7 @@ class WS_Two_Factor_CLI {
 		if ( ! empty( $assoc_args['primary'] ) ) {
 			$primary = $this->resolve_provider_or_error( trim( $assoc_args['primary'] ) );
 			if ( ! in_array( $primary, $classes, true ) ) {
-				WP_CLI::error( '--primary に指定したプロバイダーは --provider にも含める必要があります。' );
+				WP_CLI::error( __( 'The provider specified in --primary must also be included in --provider.', 'ws-two-factor-ext' ) );
 			}
 		}
 
@@ -409,24 +424,27 @@ class WS_Two_Factor_CLI {
 
 		if ( ! $dry_run ) {
 			$enforcement->save_rule( $rule );
-			WP_CLI::success( '強制ルールを保存しました。' );
+			WP_CLI::success( __( 'Enforcement rule saved.', 'ws-two-factor-ext' ) );
 		} else {
-			WP_CLI::line( WP_CLI::colorize( '%Y[dry-run] ルールは保存しません。%n' ) );
+			WP_CLI::line( WP_CLI::colorize( '%Y' . __( '[dry-run] Rule will not be saved.', 'ws-two-factor-ext' ) . '%n' ) );
 		}
 
-		WP_CLI::line( sprintf( '  プロバイダー: %s', implode( ', ', array_map( array( $this, 'class_to_alias' ), $classes ) ) ) );
+		/* translators: %s: comma-separated list of provider aliases */
+		WP_CLI::line( sprintf( __( '  Providers  : %s', 'ws-two-factor-ext' ), implode( ', ', array_map( array( $this, 'class_to_alias' ), $classes ) ) ) );
 		if ( $primary ) {
-			WP_CLI::line( sprintf( '  Primary:      %s', $this->class_to_alias( $primary ) ) );
+			/* translators: %s: provider alias */
+			WP_CLI::line( sprintf( __( '  Primary    : %s', 'ws-two-factor-ext' ), $this->class_to_alias( $primary ) ) );
 		}
-		WP_CLI::line( sprintf( '  対象ロール:   %s', empty( $roles ) ? '(全ロール)' : implode( ', ', $roles ) ) );
+		/* translators: %s: comma-separated list of roles, or "(all roles)" */
+		WP_CLI::line( sprintf( __( '  Target roles: %s', 'ws-two-factor-ext' ), empty( $roles ) ? __( '(all roles)', 'ws-two-factor-ext' ) : implode( ', ', $roles ) ) );
 
-		// --all: 既存ユーザーへの即時適用
+		// --all: apply immediately to existing users.
 		if ( isset( $assoc_args['all'] ) ) {
 			WP_CLI::line( '' );
 			$this->run_apply_enforce( $rule, $dry_run, isset( $assoc_args['overwrite'] ) );
 		} else {
-			WP_CLI::line( '  ※ 新規ユーザー作成時に自動適用されます。' );
-			WP_CLI::line( '  ※ 既存ユーザーへ適用するには: wp 2fa-ex apply-enforce' );
+			WP_CLI::line( '  ' . __( 'Note: The rule will be auto-applied to new users on registration.', 'ws-two-factor-ext' ) );
+			WP_CLI::line( '  ' . __( 'Note: To apply to existing users, run: wp 2fa-ex apply-enforce', 'ws-two-factor-ext' ) );
 		}
 	}
 
@@ -435,21 +453,21 @@ class WS_Two_Factor_CLI {
 	// -----------------------------------------------------------------------
 
 	/**
-	 * 強制ルールを既存ユーザーに適用します。
+	 * Apply the saved enforcement rule to existing users.
 	 *
 	 * ## OPTIONS
 	 *
 	 * [--user=<user>]
-	 * : 特定のユーザーにのみ適用 (ID、ログイン名、メールアドレス)。
+	 * : Apply to a specific user only (ID, login name, or email).
 	 *
 	 * [--role=<role>]
-	 * : 指定したロールのユーザーにのみ適用。
+	 * : Apply only to users with the specified role.
 	 *
 	 * [--overwrite]
-	 * : すでに 2FA が設定済みのユーザーにも上書き適用します。
+	 * : Also overwrite users who already have 2FA configured.
 	 *
 	 * [--dry-run]
-	 * : 実際には変更せず、適用予定の内容を表示します。
+	 * : Preview changes without applying.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -464,10 +482,9 @@ class WS_Two_Factor_CLI {
 		$rule        = $enforcement->get_rule();
 
 		if ( empty( $rule ) || empty( $rule['providers'] ) ) {
-			WP_CLI::error( '強制ルールが設定されていません。先に wp 2fa-ex set-enforce で設定してください。' );
+			WP_CLI::error( __( 'No enforcement rule is configured. Run wp 2fa-ex set-enforce first.', 'ws-two-factor-ext' ) );
 		}
 
-		// --user / --role でユーザーを絞り込む
 		if ( ! empty( $assoc_args['user'] ) ) {
 			$users = array( $this->get_user_or_error( $assoc_args['user'] ) );
 		} else {
@@ -493,7 +510,7 @@ class WS_Two_Factor_CLI {
 	// -----------------------------------------------------------------------
 
 	/**
-	 * 現在の強制ルールを表示します。
+	 * Display the current enforcement rule.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -506,17 +523,20 @@ class WS_Two_Factor_CLI {
 		$rule        = $enforcement->get_rule();
 
 		if ( empty( $rule ) || empty( $rule['providers'] ) ) {
-			WP_CLI::line( '強制ルールは設定されていません。' );
+			WP_CLI::line( __( 'No enforcement rule is configured.', 'ws-two-factor-ext' ) );
 			return;
 		}
 
 		WP_CLI::line( '' );
-		WP_CLI::line( '  ■ 現在の強制ルール' );
-		WP_CLI::line( sprintf( '  プロバイダー: %s', implode( ', ', array_map( array( $this, 'class_to_alias' ), $rule['providers'] ) ) ) );
+		WP_CLI::line( __( '  Current enforcement rule', 'ws-two-factor-ext' ) );
+		/* translators: %s: comma-separated list of provider aliases */
+		WP_CLI::line( sprintf( __( '  Providers  : %s', 'ws-two-factor-ext' ), implode( ', ', array_map( array( $this, 'class_to_alias' ), $rule['providers'] ) ) ) );
 		if ( ! empty( $rule['primary'] ) ) {
-			WP_CLI::line( sprintf( '  Primary:      %s', $this->class_to_alias( $rule['primary'] ) ) );
+			/* translators: %s: provider alias */
+			WP_CLI::line( sprintf( __( '  Primary    : %s', 'ws-two-factor-ext' ), $this->class_to_alias( $rule['primary'] ) ) );
 		}
-		WP_CLI::line( sprintf( '  対象ロール:   %s', empty( $rule['roles'] ) ? '(全ロール)' : implode( ', ', $rule['roles'] ) ) );
+		/* translators: %s: comma-separated list of roles, or "(all roles)" */
+		WP_CLI::line( sprintf( __( '  Target roles: %s', 'ws-two-factor-ext' ), empty( $rule['roles'] ) ? __( '(all roles)', 'ws-two-factor-ext' ) : implode( ', ', $rule['roles'] ) ) );
 		WP_CLI::line( '' );
 	}
 
@@ -525,10 +545,10 @@ class WS_Two_Factor_CLI {
 	// -----------------------------------------------------------------------
 
 	/**
-	 * 非管理者による 2FA 無効化をロックします。
+	 * Lock 2FA so non-admin users cannot disable it.
 	 *
-	 * 有効化すると、管理者以外のユーザーは自分の 2FA プロバイダーを
-	 * プロフィール画面や REST API から削除できなくなります。
+	 * Once enabled, non-admin users cannot remove their 2FA providers
+	 * via the profile page or the REST API.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -538,13 +558,13 @@ class WS_Two_Factor_CLI {
 	 */
 	public function lock_enable( array $args, array $assoc_args ): void {
 		WS_Two_Factor_Lock::get_instance()->enable();
-		WP_CLI::success( '2FA ロックを有効化しました。非管理者は 2FA を無効化できなくなります。' );
+		WP_CLI::success( __( '2FA lock enabled. Non-admin users can no longer disable 2FA.', 'ws-two-factor-ext' ) );
 	}
 
 	/**
-	 * 2FA ロックを解除します。
+	 * Disable the 2FA lock.
 	 *
-	 * 解除すると、ユーザーは自分の 2FA 設定を自由に変更できます。
+	 * Users will be able to freely change their own 2FA settings.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -554,11 +574,11 @@ class WS_Two_Factor_CLI {
 	 */
 	public function lock_disable( array $args, array $assoc_args ): void {
 		WS_Two_Factor_Lock::get_instance()->disable();
-		WP_CLI::success( '2FA ロックを無効化しました。' );
+		WP_CLI::success( __( '2FA lock disabled.', 'ws-two-factor-ext' ) );
 	}
 
 	/**
-	 * 2FA ロック機能の現在の状態を表示します。
+	 * Show the current 2FA lock status.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -569,23 +589,27 @@ class WS_Two_Factor_CLI {
 	public function lock_status( array $args, array $assoc_args ): void {
 		$enabled = WS_Two_Factor_Lock::get_instance()->is_enabled();
 		if ( $enabled ) {
-			WP_CLI::line( WP_CLI::colorize( '  2FA ロック: %G有効%n (非管理者は 2FA を無効化できません)' ) );
+			$status = WP_CLI::colorize( '%G' . __( 'enabled', 'ws-two-factor-ext' ) . '%n' );
+			/* translators: %s: colored status label */
+			WP_CLI::line( sprintf( __( '  2FA lock: %s (non-admin users cannot disable 2FA)', 'ws-two-factor-ext' ), $status ) );
 		} else {
-			WP_CLI::line( WP_CLI::colorize( '  2FA ロック: %r無効%n' ) );
+			$status = WP_CLI::colorize( '%r' . __( 'disabled', 'ws-two-factor-ext' ) . '%n' );
+			/* translators: %s: colored status label */
+			WP_CLI::line( sprintf( __( '  2FA lock: %s', 'ws-two-factor-ext' ), $status ) );
 		}
 	}
 
 	// -----------------------------------------------------------------------
-	// ヘルパーメソッド
+	// Helper methods
 	// -----------------------------------------------------------------------
 
 	/**
-	 * 指定ルールをユーザーリストに適用する共通処理。
+	 * Run the enforcement rule against a list of users.
 	 *
-	 * @param array     $rule      適用するルール。
-	 * @param bool      $dry_run   true の場合は変更しない。
-	 * @param bool      $overwrite true の場合はすでに 2FA 設定済みのユーザーにも上書き。
-	 * @param WP_User[] $users     対象ユーザーリスト。省略時は全ユーザー。
+	 * @param array     $rule      Rule to apply.
+	 * @param bool      $dry_run   When true, no changes are made.
+	 * @param bool      $overwrite When true, overwrite users who already have 2FA.
+	 * @param WP_User[] $users     Target users. All users if empty.
 	 */
 	private function run_apply_enforce( array $rule, bool $dry_run, bool $overwrite, array $users = array() ): void {
 		$enforcement = WS_Two_Factor_Enforcement::get_instance();
@@ -603,14 +627,14 @@ class WS_Two_Factor_CLI {
 		}
 
 		if ( $dry_run ) {
-			WP_CLI::line( WP_CLI::colorize( '%Y[dry-run] 実際には変更しません。%n' ) );
+			WP_CLI::line( WP_CLI::colorize( '%Y' . __( '[dry-run] No changes will be made.', 'ws-two-factor-ext' ) . '%n' ) );
 		}
 
 		$applied = 0;
 		$skipped = 0;
 
 		foreach ( $users as $user ) {
-			// ロールフィルター（ルール側のロール制限）
+			// Role filter (from the rule's role restriction).
 			if ( ! empty( $rule['roles'] ) && ! array_intersect( $user->roles, $rule['roles'] ) ) {
 				continue;
 			}
@@ -618,7 +642,8 @@ class WS_Two_Factor_CLI {
 			$enabled = $this->get_enabled_providers( $user );
 
 			if ( ! $overwrite && ! empty( $enabled ) ) {
-				WP_CLI::line( sprintf( '  スキップ: %s (ID: %d) - すでに 2FA が設定されています。', $user->user_login, $user->ID ) );
+				/* translators: 1: user login, 2: user ID */
+				WP_CLI::line( sprintf( __( '  Skipped: %1$s (ID: %2$d) — 2FA already configured.', 'ws-two-factor-ext' ), $user->user_login, $user->ID ) );
 				++$skipped;
 				continue;
 			}
@@ -626,16 +651,22 @@ class WS_Two_Factor_CLI {
 			if ( $dry_run ) {
 				WP_CLI::line(
 					sprintf(
-						'  [dry-run] %s (ID: %d): %s を有効化%s',
+						/* translators: 1: user login, 2: user ID, 3: provider list, 4: primary info (or empty) */
+						__( '  [dry-run] %1$s (ID: %2$d): enable %3$s%4$s', 'ws-two-factor-ext' ),
 						$user->user_login,
 						$user->ID,
 						implode( ', ', array_map( array( $this, 'class_to_alias' ), $rule['providers'] ) ),
-						$rule['primary'] ? sprintf( ', Primary: %s', $this->class_to_alias( $rule['primary'] ) ) : ''
+						$rule['primary'] ? sprintf(
+							/* translators: %s: primary provider alias */
+							__( ', Primary: %s', 'ws-two-factor-ext' ),
+							$this->class_to_alias( $rule['primary'] )
+						) : ''
 					)
 				);
 			} else {
 				$enforcement->apply_rule_to_user( $user, $rule );
-				WP_CLI::line( sprintf( '  適用: %s (ID: %d)', $user->user_login, $user->ID ) );
+				/* translators: 1: user login, 2: user ID */
+				WP_CLI::line( sprintf( __( '  Applied: %1$s (ID: %2$d)', 'ws-two-factor-ext' ), $user->user_login, $user->ID ) );
 			}
 
 			++$applied;
@@ -643,14 +674,16 @@ class WS_Two_Factor_CLI {
 
 		WP_CLI::line( '' );
 		if ( $dry_run ) {
-			WP_CLI::success( sprintf( '[dry-run] %d 件が適用対象、%d 件がスキップ対象です。', $applied, $skipped ) );
+			/* translators: 1: number of users to apply, 2: number to skip */
+			WP_CLI::success( sprintf( __( '[dry-run] %1$d user(s) would be updated, %2$d skipped.', 'ws-two-factor-ext' ), $applied, $skipped ) );
 		} else {
-			WP_CLI::success( sprintf( '%d 件に適用しました。%d 件はスキップしました。', $applied, $skipped ) );
+			/* translators: 1: number of users applied, 2: number skipped */
+			WP_CLI::success( sprintf( __( 'Applied to %1$d user(s). %2$d skipped.', 'ws-two-factor-ext' ), $applied, $skipped ) );
 		}
 	}
 
 	/**
-	 * ユーザーを取得する。見つからない場合は WP_CLI::error() で終了。
+	 * Retrieve a user or exit with an error.
 	 */
 	private function get_user_or_error( string $identifier ): WP_User {
 		if ( is_numeric( $identifier ) ) {
@@ -662,27 +695,29 @@ class WS_Two_Factor_CLI {
 		}
 
 		if ( ! $user ) {
-			WP_CLI::error( sprintf( 'ユーザーが見つかりません: %s', $identifier ) );
+			/* translators: %s: the identifier provided by the user */
+			WP_CLI::error( sprintf( __( 'User not found: %s', 'ws-two-factor-ext' ), $identifier ) );
 		}
 
 		return $user;
 	}
 
 	/**
-	 * プロバイダーエイリアスをクラス名に変換する。不明な場合は WP_CLI::error()。
+	 * Resolve a provider alias to its class name, or exit with an error.
 	 */
 	private function resolve_provider_or_error( string $alias ): string {
 		if ( empty( $alias ) ) {
 			$available = implode( ', ', array_keys( self::PROVIDER_ALIASES ) );
-			WP_CLI::error( sprintf( '--provider を指定してください。使用可能: %s', $available ) );
+			/* translators: %s: list of available provider aliases */
+			WP_CLI::error( sprintf( __( 'Please specify --provider. Available: %s', 'ws-two-factor-ext' ), $available ) );
 		}
 
-		// エイリアス一致
+		// Match by alias.
 		if ( isset( self::PROVIDER_ALIASES[ $alias ] ) ) {
 			return self::PROVIDER_ALIASES[ $alias ];
 		}
 
-		// 完全なクラス名として渡された場合
+		// Accept full class names as well.
 		$providers = Two_Factor_Core::get_providers();
 		if ( isset( $providers[ $alias ] ) ) {
 			return $alias;
@@ -690,7 +725,8 @@ class WS_Two_Factor_CLI {
 
 		WP_CLI::error(
 			sprintf(
-				'不明なプロバイダー: "%s"。使用可能: %s',
+				/* translators: 1: the unknown provider name entered by the user, 2: comma-separated list of valid aliases */
+				__( 'Unknown provider: "%1$s". Available: %2$s', 'ws-two-factor-ext' ),
 				$alias,
 				implode( ', ', array_keys( self::PROVIDER_ALIASES ) )
 			)
@@ -698,7 +734,7 @@ class WS_Two_Factor_CLI {
 	}
 
 	/**
-	 * クラス名をエイリアスに変換する（表示用）。
+	 * Convert a provider class name to its alias (for display).
 	 */
 	private function class_to_alias( string $class ): string {
 		$flipped = array_flip( self::PROVIDER_ALIASES );
@@ -706,7 +742,7 @@ class WS_Two_Factor_CLI {
 	}
 
 	/**
-	 * ユーザーの有効なプロバイダーリストを取得する。
+	 * Get the list of enabled providers for a user.
 	 *
 	 * @return string[]
 	 */
@@ -716,7 +752,7 @@ class WS_Two_Factor_CLI {
 	}
 
 	/**
-	 * ユーザーの Primary プロバイダーを取得する。
+	 * Get the primary provider class name for a user.
 	 */
 	private function get_primary_provider( WP_User $user ): string {
 		return (string) get_user_meta( $user->ID, Two_Factor_Core::PROVIDER_USER_META_KEY, true );
