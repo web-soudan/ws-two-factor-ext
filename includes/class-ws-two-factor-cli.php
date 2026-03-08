@@ -521,6 +521,61 @@ class WS_Two_Factor_CLI {
 	}
 
 	// -----------------------------------------------------------------------
+	// lock-enable / lock-disable / lock-status
+	// -----------------------------------------------------------------------
+
+	/**
+	 * 非管理者による 2FA 無効化をロックします。
+	 *
+	 * 有効化すると、管理者以外のユーザーは自分の 2FA プロバイダーを
+	 * プロフィール画面や REST API から削除できなくなります。
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp 2fa-ex lock-enable
+	 *
+	 * @subcommand lock-enable
+	 */
+	public function lock_enable( array $args, array $assoc_args ): void {
+		WS_Two_Factor_Lock::get_instance()->enable();
+		WP_CLI::success( '2FA ロックを有効化しました。非管理者は 2FA を無効化できなくなります。' );
+	}
+
+	/**
+	 * 2FA ロックを解除します。
+	 *
+	 * 解除すると、ユーザーは自分の 2FA 設定を自由に変更できます。
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp 2fa-ex lock-disable
+	 *
+	 * @subcommand lock-disable
+	 */
+	public function lock_disable( array $args, array $assoc_args ): void {
+		WS_Two_Factor_Lock::get_instance()->disable();
+		WP_CLI::success( '2FA ロックを無効化しました。' );
+	}
+
+	/**
+	 * 2FA ロック機能の現在の状態を表示します。
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp 2fa-ex lock-status
+	 *
+	 * @subcommand lock-status
+	 */
+	public function lock_status( array $args, array $assoc_args ): void {
+		$enabled = WS_Two_Factor_Lock::get_instance()->is_enabled();
+		if ( $enabled ) {
+			WP_CLI::line( WP_CLI::colorize( '  2FA ロック: %G有効%n (非管理者は 2FA を無効化できません)' ) );
+		} else {
+			WP_CLI::line( WP_CLI::colorize( '  2FA ロック: %r無効%n' ) );
+		}
+	}
+
+	// -----------------------------------------------------------------------
 	// ヘルパーメソッド
 	// -----------------------------------------------------------------------
 

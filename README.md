@@ -8,6 +8,7 @@
 - WP-CLI からプロバイダーの有効化 / 無効化 / Primary 設定
 - 強制ルールを保存し、新規ユーザー作成時に自動適用
 - 既存ユーザーへの一括適用 (`--all` / `apply-enforce`)
+- **[v1.1.0]** 非管理者による 2FA 無効化のロック機能
 
 ## 要件
 
@@ -172,6 +173,44 @@ wp 2fa-ex show-enforce
 
 ---
 
+### `wp 2fa-ex lock-enable` — 2FA ロックの有効化
+
+非管理者ユーザーが自分の 2FA を無効化できないようにロックします。
+
+有効化すると以下の経路での 2FA 削除がブロックされます。
+- プロフィール画面からのプロバイダーのチェック解除
+- REST API (`DELETE /wp-json/two-factor/1.0/totp` 等) からの削除
+
+ロック中のユーザーのプロフィール画面には警告が表示されます。
+
+```bash
+wp 2fa-ex lock-enable
+```
+
+> 管理者 (`manage_options` 権限) は引き続き変更可能です。
+
+---
+
+### `wp 2fa-ex lock-disable` — 2FA ロックの解除
+
+2FA ロックを解除し、ユーザーが自分の 2FA を自由に変更できる状態に戻します。
+
+```bash
+wp 2fa-ex lock-disable
+```
+
+---
+
+### `wp 2fa-ex lock-status` — 2FA ロックの状態確認
+
+現在の 2FA ロック状態を表示します。
+
+```bash
+wp 2fa-ex lock-status
+```
+
+---
+
 ## プロバイダー名
 
 | エイリアス | 概要 |
@@ -180,6 +219,13 @@ wp 2fa-ex show-enforce
 | `totp` | 認証アプリ (Google Authenticator 等) |
 | `backup` | バックアップコード |
 | `fido-u2f` | FIDO U2F / YubiKey |
+
+## バージョン履歴
+
+| バージョン | 変更内容 |
+|---|---|
+| 1.1.0 | 非管理者による 2FA 無効化ロック機能を追加 (`lock-enable` / `lock-disable` / `lock-status`) |
+| 1.0.0 | 初回リリース |
 
 ## 典型的なワークフロー
 
@@ -215,4 +261,17 @@ wp 2fa-ex show-enforce
 # ルールを変更（dry-run で確認してから本番実行）
 wp 2fa-ex set-enforce --provider=email,backup --primary=email --all --dry-run
 wp 2fa-ex set-enforce --provider=email,backup --primary=email --all --overwrite
+```
+
+### 2FA 設定をユーザーが勝手に外せないようにする
+
+```bash
+# ロックを有効化（以降、非管理者は 2FA を無効化できなくなる）
+wp 2fa-ex lock-enable
+
+# 状態確認
+wp 2fa-ex lock-status
+
+# ロックを解除する場合
+wp 2fa-ex lock-disable
 ```
