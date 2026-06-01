@@ -1,0 +1,21 @@
+{
+  "name": "ws-two-factor-ext",
+  "version": "1.2.0",
+  "description": "WP-CLI commands and enforcement features extending the Two Factor plugin.",
+  "private": true,
+  "scripts": {
+    "prepare": "husky",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@wordpress/e2e-test-utils-playwright": "^0.22.0",
+    "@wordpress/env": "^10.12.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0"
+  },
+  "lint-staged": {
+    "*.php": "composer run phpcs --"
+  }
+}

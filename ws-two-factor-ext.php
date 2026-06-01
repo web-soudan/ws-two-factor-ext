@@ -2,13 +2,16 @@
 /**
  * Plugin Name: WS Two Factor Extension
  * Description: WP-CLI commands and enforcement features extending the Two Factor plugin.
- * Version:     1.1.0
+ * Version:     1.2.0
  * Author:      株式会社Webの相談所
  * Author URI:  https://web-soudan.co.jp/
  * License:     GPL-2.0-or-later
  * Text Domain: ws-two-factor-ext
+ * Domain Path: /languages
  *
  * Requires Plugins: two-factor
+ *
+ * @package WS_Two_Factor_Ext
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -16,7 +19,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 define( 'WS_2FA_EXT_DIR', plugin_dir_path( __FILE__ ) );
-define( 'WS_2FA_EXT_VERSION', '1.1.0' );
+define( 'WS_2FA_EXT_VERSION', '1.2.0' );
+
+/**
+ * テキストドメインの読み込み。
+ */
+add_action(
+	'plugins_loaded',
+	function () {
+		load_plugin_textdomain(
+			'ws-two-factor-ext',
+			false,
+			dirname( plugin_basename( __FILE__ ) ) . '/languages/'
+		);
+	},
+	1
+);
 
 /**
  * Two Factor プラグインが有効かどうかチェック。
@@ -36,7 +54,7 @@ add_action(
 		}
 		if ( ! ws_2fa_ext_check_dependency() ) {
 			echo '<div class="notice notice-error"><p><strong>WS Two Factor Extension:</strong> '
-				. esc_html__( 'Two Factor プラグインが有効化されていません。', 'ws-two-factor-ext' )
+				. esc_html__( 'Two Factor plugin is not activated.', 'ws-two-factor-ext' )
 				. '</p></div>';
 		}
 	}
@@ -52,15 +70,15 @@ add_action(
 			return;
 		}
 
-		// Enforcement クラス（常時ロード）
+		// Enforcement クラス（常時ロード）。
 		require_once WS_2FA_EXT_DIR . 'includes/class-ws-two-factor-enforcement.php';
 		WS_Two_Factor_Enforcement::get_instance();
 
-		// Lock クラス（常時ロード）
+		// Lock クラス（常時ロード）。
 		require_once WS_2FA_EXT_DIR . 'includes/class-ws-two-factor-lock.php';
 		WS_Two_Factor_Lock::get_instance();
 
-		// WP-CLI コマンド
+		// WP-CLI コマンド。
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once WS_2FA_EXT_DIR . 'includes/class-ws-two-factor-cli.php';
 			WP_CLI::add_command( '2fa-ex', 'WS_Two_Factor_CLI' );

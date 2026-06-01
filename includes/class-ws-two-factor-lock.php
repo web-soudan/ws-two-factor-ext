@@ -23,10 +23,18 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class WS_Two_Factor_Lock {
 
-	/** @var string ロック状態を保存するオプションキー */
+	/**
+	 * ロック状態を保存するオプションキー。
+	 *
+	 * @var string
+	 */
 	private const OPTION_KEY = 'ws_2fa_lock_enabled';
 
-	/** @var WS_Two_Factor_Lock|null シングルトンインスタンス */
+	/**
+	 * シングルトンインスタンス。
+	 *
+	 * @var WS_Two_Factor_Lock|null
+	 */
 	private static ?WS_Two_Factor_Lock $instance = null;
 
 	/**
@@ -45,18 +53,18 @@ class WS_Two_Factor_Lock {
 	 * ロックの有効/無効に関わらず常に登録し、各コールバック内で is_enabled() を確認します。
 	 */
 	private function __construct() {
-		// プロフィール保存時（Two Factor の priority 10 より前に実行）
+		// プロフィール保存時（Two Factor の priority 10 より前に実行）。
 		add_action( 'personal_options_update', array( $this, 'prevent_disable_on_profile_save' ), 5 );
 
-		// REST API 経由での削除
+		// REST API 経由での削除。
 		add_filter( 'two_factor_rest_api_can_edit_user', array( $this, 'prevent_disable_via_rest' ), 10, 2 );
 
-		// プロフィール画面への通知表示
+		// プロフィール画面への通知表示。
 		add_action( 'show_user_profile', array( $this, 'show_lock_notice' ) );
 	}
 
 	// -----------------------------------------------------------------------
-	// ロック設定
+	// ロック設定。
 	// -----------------------------------------------------------------------
 
 	/**
@@ -81,7 +89,7 @@ class WS_Two_Factor_Lock {
 	}
 
 	// -----------------------------------------------------------------------
-	// フック・フィルター
+	// フック・フィルター。
 	// -----------------------------------------------------------------------
 
 	/**
@@ -97,31 +105,34 @@ class WS_Two_Factor_Lock {
 			return;
 		}
 
-		// 管理者は制限なし
+		// 管理者は制限なし。
 		if ( current_user_can( 'manage_options' ) ) {
 			return;
 		}
 
-		// 既存の有効プロバイダーを取得
+		// 既存の有効プロバイダーを取得。
 		$existing = get_user_meta( $user_id, Two_Factor_Core::ENABLED_PROVIDERS_USER_META_KEY, true );
 		if ( empty( $existing ) || ! is_array( $existing ) ) {
-			return; // 2FA 未設定なら制限不要
+			return; // 2FA 未設定なら制限不要。
 		}
 
-		// フォームから送信されたプロバイダーに既存分を強制マージ（削除不可・追加のみ許可）
+		// personal_options_update アクションは WP コアが check_admin_referer() でノンス検証済み。
+		// Two Factor プラグインが処理する前に $_POST データを上書きし、プロバイダー削除を防ぐ。
+		// phpcs:disable WordPress.Security.NonceVerification.Missing
 		$submitted = isset( $_POST[ Two_Factor_Core::ENABLED_PROVIDERS_USER_META_KEY ] )
-			? (array) $_POST[ Two_Factor_Core::ENABLED_PROVIDERS_USER_META_KEY ]
+			? array_map( 'sanitize_text_field', wp_unslash( (array) $_POST[ Two_Factor_Core::ENABLED_PROVIDERS_USER_META_KEY ] ) )
 			: array();
 
 		$_POST[ Two_Factor_Core::ENABLED_PROVIDERS_USER_META_KEY ] = array_values(
 			array_unique( array_merge( $existing, $submitted ) )
 		);
 
-		// Primary プロバイダーも保持（空で送信された場合は既存値を維持）
+		// Primary プロバイダーも保持（空で送信された場合は既存値を維持）。
 		$existing_primary = get_user_meta( $user_id, Two_Factor_Core::PROVIDER_USER_META_KEY, true );
 		if ( $existing_primary && empty( $_POST[ Two_Factor_Core::PROVIDER_USER_META_KEY ] ) ) {
 			$_POST[ Two_Factor_Core::PROVIDER_USER_META_KEY ] = $existing_primary;
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	/**
@@ -139,18 +150,18 @@ class WS_Two_Factor_Lock {
 			return $can;
 		}
 
-		// 管理者は制限なし
+		// 管理者は制限なし。
 		if ( current_user_can( 'manage_options' ) ) {
 			return $can;
 		}
 
-		// DELETE リクエスト（プロバイダー削除）のみブロック
-		$method = strtoupper( $_SERVER['REQUEST_METHOD'] ?? '' );
+		// DELETE リクエスト（プロバイダー削除）のみブロック。
+		$method = strtoupper( isset( $_SERVER['REQUEST_METHOD'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) : '' );
 		if ( 'DELETE' !== $method ) {
 			return $can;
 		}
 
-		// 2FA が設定済みの場合のみブロック（未設定なら設定変更を妨げない）
+		// 2FA が設定済みの場合のみブロック（未設定なら設定変更を妨げない）。
 		$existing = get_user_meta( $user_id, Two_Factor_Core::ENABLED_PROVIDERS_USER_META_KEY, true );
 		if ( empty( $existing ) ) {
 			return $can;
@@ -158,7 +169,7 @@ class WS_Two_Factor_Lock {
 
 		return new WP_Error(
 			'two_factor_locked',
-			__( '2FA の無効化は管理者のみが行えます。', 'ws-two-factor-ext' ),
+			__( 'Only administrators can disable 2FA.', 'ws-two-factor-ext' ),
 			array( 'status' => 403 )
 		);
 	}
@@ -173,12 +184,12 @@ class WS_Two_Factor_Lock {
 			return;
 		}
 
-		// 管理者には通知不要
+		// 管理者には通知不要。
 		if ( current_user_can( 'manage_options' ) ) {
 			return;
 		}
 
-		// 2FA が設定済みのユーザーにのみ通知
+		// 2FA が設定済みのユーザーにのみ通知。
 		$existing = get_user_meta( $user->ID, Two_Factor_Core::ENABLED_PROVIDERS_USER_META_KEY, true );
 		if ( empty( $existing ) ) {
 			return;
@@ -187,8 +198,8 @@ class WS_Two_Factor_Lock {
 		?>
 		<div class="notice notice-warning inline" style="margin: 1em 0 0;">
 			<p>
-				<strong><?php esc_html_e( '2ファクター認証はロックされています。', 'ws-two-factor-ext' ); ?></strong>
-				<?php esc_html_e( '現在の 2FA 設定を無効化・削除するには管理者へお問い合わせください。', 'ws-two-factor-ext' ); ?>
+				<strong><?php esc_html_e( 'Two-factor authentication is locked.', 'ws-two-factor-ext' ); ?></strong>
+				<?php esc_html_e( 'Please contact an administrator to disable or remove your current 2FA settings.', 'ws-two-factor-ext' ); ?>
 			</p>
 		</div>
 		<?php

@@ -1,0 +1,312 @@
+# Copyright (C) 2026 株式会社Webの相談所
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: WS Two Factor Extension 1.2.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/ws-two-factor-ext\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-03-08T02:10:06+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: ws-two-factor-ext\n"
+
+#. Plugin Name of the plugin
+#: ws-two-factor-ext.php
+msgid "WS Two Factor Extension"
+msgstr ""
+
+#. Description of the plugin
+#: ws-two-factor-ext.php
+msgid "WP-CLI commands and enforcement features extending the Two Factor plugin."
+msgstr ""
+
+#. Author of the plugin
+#: ws-two-factor-ext.php
+msgid "株式会社Webの相談所"
+msgstr ""
+
+#. Author URI of the plugin
+#: ws-two-factor-ext.php
+msgid "https://web-soudan.co.jp/"
+msgstr ""
+
+#. translators: shown when no primary provider is set
+#: includes/class-ws-two-factor-cli.php:107
+msgid "(none)"
+msgstr ""
+
+#: includes/class-ws-two-factor-cli.php:113
+msgid "No matching users found."
+msgstr ""
+
+#. translators: 1: user login, 2: user ID
+#: includes/class-ws-two-factor-cli.php:150
+#, php-format
+msgid "  User     : %1$s (ID: %2$d)"
+msgstr ""
+
+#. translators: %s: email address
+#: includes/class-ws-two-factor-cli.php:152
+#, php-format
+msgid "  Email    : %s"
+msgstr ""
+
+#. translators: %s: comma-separated list of roles
+#: includes/class-ws-two-factor-cli.php:154
+#, php-format
+msgid "  Roles    : %s"
+msgstr ""
+
+#: includes/class-ws-two-factor-cli.php:156
+msgid "  2FA Provider Status"
+msgstr ""
+
+#: includes/class-ws-two-factor-cli.php:166
+msgid "primary"
+msgstr ""
+
+#. translators: label shown when provider is enabled but not yet configured
+#: includes/class-ws-two-factor-cli.php:168
+msgid "not configured"
+msgstr ""
+
+#: includes/class-ws-two-factor-cli.php:191
+msgid "  Enforcement rule (applies to this user)"
+msgstr ""
+
+#. translators: %s: comma-separated list of provider aliases
+#: includes/class-ws-two-factor-cli.php:193
+#, php-format
+msgid "    Providers: %s"
+msgstr ""
+
+#. translators: %s: provider alias
+#: includes/class-ws-two-factor-cli.php:196
+#, php-format
+msgid "    Primary:   %s"
+msgstr ""
+
+#. translators: %s: provider alias
+#: includes/class-ws-two-factor-cli.php:236
+#, php-format
+msgid "%s is already enabled."
+msgstr ""
+
+#. translators: 1: user login, 2: user ID, 3: provider alias
+#: includes/class-ws-two-factor-cli.php:241
+#, php-format
+msgid "Enabled %3$s for %1$s (ID: %2$d)."
+msgstr ""
+
+#. translators: %s: provider alias
+#: includes/class-ws-two-factor-cli.php:247
+#, php-format
+msgid "Set %s as the primary provider."
+msgstr ""
+
+#. translators: 1: user login, 2: user ID
+#: includes/class-ws-two-factor-cli.php:282
+#, php-format
+msgid "Disabled all 2FA providers for %1$s (ID: %2$d)."
+msgstr ""
+
+#. translators: %s: provider alias
+#: includes/class-ws-two-factor-cli.php:291
+#, php-format
+msgid "%s is not enabled."
+msgstr ""
+
+#: includes/class-ws-two-factor-cli.php:302
+msgid "Primary provider also cleared."
+msgstr ""
+
+#. translators: 1: user login, 2: user ID, 3: provider alias
+#: includes/class-ws-two-factor-cli.php:306
+#, php-format
+msgid "Disabled %3$s for %1$s (ID: %2$d)."
+msgstr ""
+
+#. translators: %s: provider alias
+#: includes/class-ws-two-factor-cli.php:337
+#, php-format
+msgid "%s is not enabled. Enable it first with the enable command."
+msgstr ""
+
+#. translators: 1: user login, 2: user ID, 3: provider alias
+#: includes/class-ws-two-factor-cli.php:342
+#, php-format
+msgid "Set primary provider of %1$s (ID: %2$d) to %3$s."
+msgstr ""
+
+#: includes/class-ws-two-factor-cli.php:390
+msgid "Enforcement rule deleted."
+msgstr ""
+
+#: includes/class-ws-two-factor-cli.php:395
+msgid "Please specify the --provider option."
+msgstr ""
+
+#: includes/class-ws-two-factor-cli.php:408
+msgid "The provider specified in --primary must also be included in --provider."
+msgstr ""
+
+#: includes/class-ws-two-factor-cli.php:427
+msgid "Enforcement rule saved."
+msgstr ""
+
+#: includes/class-ws-two-factor-cli.php:429
+msgid "[dry-run] Rule will not be saved."
+msgstr ""
+
+#. translators: %s: comma-separated list of provider aliases
+#: includes/class-ws-two-factor-cli.php:433
+#: includes/class-ws-two-factor-cli.php:533
+#, php-format
+msgid "  Providers  : %s"
+msgstr ""
+
+#. translators: %s: provider alias
+#: includes/class-ws-two-factor-cli.php:436
+#: includes/class-ws-two-factor-cli.php:536
+#, php-format
+msgid "  Primary    : %s"
+msgstr ""
+
+#. translators: %s: comma-separated list of roles, or "(all roles)"
+#: includes/class-ws-two-factor-cli.php:439
+#: includes/class-ws-two-factor-cli.php:539
+#, php-format
+msgid "  Target roles: %s"
+msgstr ""
+
+#. translators: %s: comma-separated list of roles, or "(all roles)"
+#: includes/class-ws-two-factor-cli.php:439
+#: includes/class-ws-two-factor-cli.php:539
+msgid "(all roles)"
+msgstr ""
+
+#: includes/class-ws-two-factor-cli.php:446
+msgid "Note: The rule will be auto-applied to new users on registration."
+msgstr ""
+
+#: includes/class-ws-two-factor-cli.php:447
+msgid "Note: To apply to existing users, run: wp 2fa-ex apply-enforce"
+msgstr ""
+
+#: includes/class-ws-two-factor-cli.php:485
+msgid "No enforcement rule is configured. Run wp 2fa-ex set-enforce first."
+msgstr ""
+
+#: includes/class-ws-two-factor-cli.php:526
+msgid "No enforcement rule is configured."
+msgstr ""
+
+#: includes/class-ws-two-factor-cli.php:531
+msgid "  Current enforcement rule"
+msgstr ""
+
+#: includes/class-ws-two-factor-cli.php:561
+msgid "2FA lock enabled. Non-admin users can no longer disable 2FA."
+msgstr ""
+
+#: includes/class-ws-two-factor-cli.php:577
+msgid "2FA lock disabled."
+msgstr ""
+
+#: includes/class-ws-two-factor-cli.php:592
+msgid "enabled"
+msgstr ""
+
+#. translators: %s: colored status label
+#: includes/class-ws-two-factor-cli.php:594
+#, php-format
+msgid "  2FA lock: %s (non-admin users cannot disable 2FA)"
+msgstr ""
+
+#: includes/class-ws-two-factor-cli.php:596
+msgid "disabled"
+msgstr ""
+
+#. translators: %s: colored status label
+#: includes/class-ws-two-factor-cli.php:598
+#, php-format
+msgid "  2FA lock: %s"
+msgstr ""
+
+#: includes/class-ws-two-factor-cli.php:630
+msgid "[dry-run] No changes will be made."
+msgstr ""
+
+#. translators: 1: user login, 2: user ID
+#: includes/class-ws-two-factor-cli.php:646
+#, php-format
+msgid "  Skipped: %1$s (ID: %2$d) — 2FA already configured."
+msgstr ""
+
+#. translators: 1: user login, 2: user ID, 3: provider list, 4: primary info (or empty)
+#: includes/class-ws-two-factor-cli.php:655
+#, php-format
+msgid "  [dry-run] %1$s (ID: %2$d): enable %3$s%4$s"
+msgstr ""
+
+#. translators: %s: primary provider alias
+#: includes/class-ws-two-factor-cli.php:661
+#, php-format
+msgid ", Primary: %s"
+msgstr ""
+
+#. translators: 1: user login, 2: user ID
+#: includes/class-ws-two-factor-cli.php:669
+#, php-format
+msgid "  Applied: %1$s (ID: %2$d)"
+msgstr ""
+
+#. translators: 1: number of users to apply, 2: number to skip
+#: includes/class-ws-two-factor-cli.php:678
+#, php-format
+msgid "[dry-run] %1$d user(s) would be updated, %2$d skipped."
+msgstr ""
+
+#. translators: 1: number of users applied, 2: number skipped
+#: includes/class-ws-two-factor-cli.php:681
+#, php-format
+msgid "Applied to %1$d user(s). %2$d skipped."
+msgstr ""
+
+#. translators: %s: the identifier provided by the user
+#: includes/class-ws-two-factor-cli.php:699
+#, php-format
+msgid "User not found: %s"
+msgstr ""
+
+#. translators: %s: list of available provider aliases
+#: includes/class-ws-two-factor-cli.php:712
+#, php-format
+msgid "Please specify --provider. Available: %s"
+msgstr ""
+
+#. translators: 1: the unknown provider name entered by the user, 2: comma-separated list of valid aliases
+#: includes/class-ws-two-factor-cli.php:729
+#, php-format
+msgid "Unknown provider: \"%1$s\". Available: %2$s"
+msgstr ""
+
+#: includes/class-ws-two-factor-lock.php:161
+msgid "Only administrators can disable 2FA."
+msgstr ""
+
+#: includes/class-ws-two-factor-lock.php:190
+msgid "Two-factor authentication is locked."
+msgstr ""
+
+#: includes/class-ws-two-factor-lock.php:191
+msgid "Please contact an administrator to disable or remove your current 2FA settings."
+msgstr ""
+
+#: ws-two-factor-ext.php:55
+msgid "Two Factor plugin is not activated."
+msgstr ""

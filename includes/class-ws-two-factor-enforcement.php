@@ -16,10 +16,18 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class WS_Two_Factor_Enforcement {
 
-	/** @var string オプションキー */
+	/**
+	 * オプションキー。
+	 *
+	 * @var string
+	 */
 	private const OPTION_KEY = 'ws_2fa_enforcement_rule';
 
-	/** @var WS_Two_Factor_Enforcement|null シングルトンインスタンス */
+	/**
+	 * シングルトンインスタンス。
+	 *
+	 * @var WS_Two_Factor_Enforcement|null
+	 */
 	private static ?WS_Two_Factor_Enforcement $instance = null;
 
 	/**
@@ -60,7 +68,7 @@ class WS_Two_Factor_Enforcement {
 			return;
 		}
 
-		// ロールフィルター
+		// ロールフィルター。
 		if ( ! empty( $rule['roles'] ) && ! array_intersect( $user->roles, $rule['roles'] ) ) {
 			return;
 		}
@@ -85,10 +93,10 @@ class WS_Two_Factor_Enforcement {
 	/**
 	 * 強制ルールを保存します。
 	 *
-	 * @param array{providers: string[], primary?: string, roles?: string[]} $rule
+	 * @param array{providers: string[], primary?: string, roles?: string[]} $rule 保存するルール。
 	 */
 	public function save_rule( array $rule ): void {
-		// 登録済みプロバイダーのみ許可（未登録クラス名の混入を防ぐ）
+		// 登録済みプロバイダーのみ許可（未登録クラス名の混入を防ぐ）。
 		$registered_providers = array_keys( Two_Factor_Core::get_providers() );
 
 		$raw_providers = array_map( 'sanitize_text_field', (array) ( $rule['providers'] ?? array() ) );
@@ -130,14 +138,14 @@ class WS_Two_Factor_Enforcement {
 			return;
 		}
 
-		// 既存の有効プロバイダーとマージ（重複排除）
-		$current  = get_user_meta( $user->ID, Two_Factor_Core::ENABLED_PROVIDERS_USER_META_KEY, true );
-		$current  = is_array( $current ) ? $current : array();
-		$merged   = array_values( array_unique( array_merge( $current, $providers ) ) );
+		// 既存の有効プロバイダーとマージ（重複排除）。
+		$current = get_user_meta( $user->ID, Two_Factor_Core::ENABLED_PROVIDERS_USER_META_KEY, true );
+		$current = is_array( $current ) ? $current : array();
+		$merged  = array_values( array_unique( array_merge( $current, $providers ) ) );
 
 		update_user_meta( $user->ID, Two_Factor_Core::ENABLED_PROVIDERS_USER_META_KEY, $merged );
 
-		// Primary プロバイダーの設定（まだ設定がない場合、または primary が指定されている場合）
+		// Primary プロバイダーの設定（まだ設定がない場合、または primary が指定されている場合）。
 		if ( $primary ) {
 			$current_primary = get_user_meta( $user->ID, Two_Factor_Core::PROVIDER_USER_META_KEY, true );
 			if ( empty( $current_primary ) ) {

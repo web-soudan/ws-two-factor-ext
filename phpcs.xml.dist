@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<ruleset name="WS Two Factor Extension">
+    <description>Custom ruleset for WS Two Factor Extension</description>
+
+    <!-- 対象ファイル -->
+    <file>./ws-two-factor-ext.php</file>
+    <file>./includes/</file>
+
+    <!-- 除外 -->
+    <exclude-pattern>./vendor/*</exclude-pattern>
+    <exclude-pattern>./node_modules/*</exclude-pattern>
+    <exclude-pattern>./tests/*</exclude-pattern>
+
+    <!-- WordPress Coding Standards -->
+    <rule ref="WordPress"/>
+
+    <!-- PHP互換性チェック -->
+    <rule ref="PHPCompatibilityWP"/>
+
+    <!-- PHP バージョン -->
+    <config name="testVersion" value="8.3-"/>
+
+    <!-- テキストドメイン -->
+    <config name="text_domain" value="ws-two-factor-ext"/>
+
+    <!-- プレフィックス -->
+    <config name="prefixes" value="ws_2fa_ext,WS_Two_Factor"/>
+    <config name="minimum_wp_version" value="6.5"/>
+
+    <!--
+        日本語インラインコメント末尾チェックを除外。
+        phpcs は「。」（U+3002）を有効な終端文字として認識しない。
+    -->
+    <rule ref="Squiz.Commenting.InlineComment.InvalidEndChar">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+
+    <!--
+        日本語 @param/@return 説明文の末尾ピリオドチェックを除外。
+        同上の理由で「。」が誤検出される。
+    -->
+    <rule ref="Squiz.Commenting.FunctionComment.ParamCommentFullStop">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+    <rule ref="Squiz.Commenting.FunctionComment.ReturnCommentFullStop">
+        <exclude-pattern>*</exclude-pattern>
+    </rule>
+
+    <!--
+        WP-CLI コマンドクラスでは $args / $assoc_args の @param タグを
+        ## OPTIONS セクションで代替ドキュメントしているため除外。
+    -->
+    <rule ref="Squiz.Commenting.FunctionComment.MissingParamTag">
+        <exclude-pattern>*/class-ws-two-factor-cli.php</exclude-pattern>
+    </rule>
+    <rule ref="Squiz.Commenting.FunctionComment.MissingParamComment">
+        <exclude-pattern>*/class-ws-two-factor-cli.php</exclude-pattern>
+    </rule>
+    <rule ref="Generic.Commenting.DocComment.MissingShort">
+        <exclude-pattern>*/class-ws-two-factor-cli.php</exclude-pattern>
+    </rule>
+    <rule ref="Squiz.Commenting.FunctionComment.ParamNameNoMatch">
+        <exclude-pattern>*/class-ws-two-factor-cli.php</exclude-pattern>
+    </rule>
+
+    <!--
+        WP-CLI コマンドは $args/$assoc_args を API 仕様上受け取る必要があるが、
+        単純なコマンドでは未使用になる。この警告を CLI クラスのみ除外。
+    -->
+    <rule ref="Generic.CodeAnalysis.UnusedFunctionParameter">
+        <exclude-pattern>*/class-ws-two-factor-cli.php</exclude-pattern>
+    </rule>
+</ruleset>
