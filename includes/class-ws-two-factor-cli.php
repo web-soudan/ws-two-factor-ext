@@ -493,7 +493,7 @@ class WS_Two_Factor_CLI {
 				'fields'  => 'all',
 				'orderby' => 'ID',
 			);
-			$role = $assoc_args['role'] ?? '';
+			$role       = $assoc_args['role'] ?? '';
 			if ( $role ) {
 				$query_args['role'] = sanitize_text_field( $role );
 			} elseif ( ! empty( $rule['roles'] ) ) {
@@ -735,10 +735,12 @@ class WS_Two_Factor_CLI {
 
 	/**
 	 * Convert a provider class name to its alias (for display).
+	 *
+	 * @param string $class_name Provider class name.
 	 */
-	private function class_to_alias( string $class ): string {
+	private function class_to_alias( string $class_name ): string {
 		$flipped = array_flip( self::PROVIDER_ALIASES );
-		return $flipped[ $class ] ?? $class;
+		return $flipped[ $class_name ] ?? $class_name;
 	}
 
 	/**

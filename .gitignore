@@ -9,6 +9,8 @@ Thumbs.db
 *.swo
 
 # PHP / Composer
+# vendor/ はリリース zip ビルド時に composer install --no-dev で生成するため除外。
+# Git デプロイ（rsync/git pull）を使う場合は vendor/ をトラッキングすること。
 vendor/
 composer.lock
 
@@ -16,7 +18,18 @@ composer.lock
 node_modules/
 npm-debug.log
 yarn-error.log
-package-lock.json
+
+# wp-env
+.wp-env.override.json
+debug.log
+db.sql
+
+# Test cache
+.phpunit.result.cache
+test-results/
+playwright-report/
+blob-report/
+tests/e2e/.auth/
 
 # Build
 dist/

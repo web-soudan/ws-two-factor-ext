@@ -1,0 +1,28 @@
+{
+  "core": null,
+  "plugins": [
+    ".",
+    "https://downloads.wordpress.org/plugin/two-factor.zip"
+  ],
+  "phpVersion": "8.3",
+  "config": {
+    "WP_DEBUG": true,
+    "WP_DEBUG_LOG": true,
+    "WP_DEBUG_DISPLAY": true,
+    "SCRIPT_DEBUG": true,
+    "SAVEQUERIES": true
+  },
+  "mappings": {
+    "wp-content/debug.log": "./debug.log",
+    "db.sql": "./db.sql"
+  },
+  "env": {
+    "tests": {
+      "phpVersion": "8.3",
+      "config": {
+        "WP_DEBUG": true,
+        "WP_DEBUG_LOG": true
+      }
+    }
+  }
+}

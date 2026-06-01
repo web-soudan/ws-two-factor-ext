@@ -10,6 +10,8 @@
  * Domain Path: /languages
  *
  * Requires Plugins: two-factor
+ *
+ * @package WS_Two_Factor_Ext
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -68,15 +70,15 @@ add_action(
 			return;
 		}
 
-		// Enforcement クラス（常時ロード）
+		// Enforcement クラス（常時ロード）。
 		require_once WS_2FA_EXT_DIR . 'includes/class-ws-two-factor-enforcement.php';
 		WS_Two_Factor_Enforcement::get_instance();
 
-		// Lock クラス（常時ロード）
+		// Lock クラス（常時ロード）。
 		require_once WS_2FA_EXT_DIR . 'includes/class-ws-two-factor-lock.php';
 		WS_Two_Factor_Lock::get_instance();
 
-		// WP-CLI コマンド
+		// WP-CLI コマンド。
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			require_once WS_2FA_EXT_DIR . 'includes/class-ws-two-factor-cli.php';
 			WP_CLI::add_command( '2fa-ex', 'WS_Two_Factor_CLI' );
