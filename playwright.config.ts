@@ -8,7 +8,7 @@ const config = defineConfig( {
 	workers: 1,
 	reporter: process.env.CI ? 'github' : 'list',
 	use: {
-		baseURL: process.env.WP_BASE_URL || 'http://localhost:8889',
+		baseURL: process.env.WP_BASE_URL || 'http://localhost:8888',
 		trace: 'retain-on-failure',
 		screenshot: 'only-on-failure',
 	},
